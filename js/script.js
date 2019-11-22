@@ -1,7 +1,8 @@
 var capture;
 
 var buff;
-var lineNum = 20;
+var lineNum = 18;
+//var lineNum = 12;
 var linesColor = [lineNum];
 
 var linesXPos = [lineNum];
@@ -19,9 +20,8 @@ var linesToneTrigger = [lineNum];
 
 var startPostion;
 
-var noteListWhole = [
-"C3", "E3", "D3", "G#4", "F#4", "C4", "A#4", "D4", "F#4", "E4",
-"A#4", "G#4", "D5", "C5", "F#5", "E5", "A#5", "G#5", "C6", "D6"
+var noteListWhole = [ "D1", "A1", "D2", "G2","A2", "D3", "D4", "A4", "D5", "G5", "A5", "D6", "G#3", "F#3", "A#4", "D4", "D#4", "G#4", "F#4",
+"A#5", "D5", "D#5", "G#5", "F#5", "A#6", "D6", "D#6", "G#6", "F#6"
 ];
 
 var cameraScreenRatio;
@@ -34,15 +34,31 @@ function preload(){
 
 function setup() {
 
-    createCanvas(1100, 600);
+    createCanvas(1400, 800);
+    //    createCanvas(1100, 600);
 
-    let reverb = new Tone.JCReverb(0.9).connect(Tone.Master);
-    let delay = new Tone.FeedbackDelay(0.6); 
+    let reverb = new Tone.JCReverb(0.9);
+    let delay = new Tone.FeedbackDelay(0.9, 0.9);
 
-    polySynth = new Tone.PolySynth(6, Tone.Synth);
+
+    //polySynth = new Tone.PolySynth(7, Tone.Synth, {
+   polySynth = new Tone.PolySynth(13, Tone.Synth, {
+    oscillator : {
+     //type : "sine"
+     type : "sawtooth"
+   },
+   envelope : {
+     attack : 0.773 ,
+     decay : 0.073 ,
+     sustain : 0.73 ,
+     release : 0.073
+   }
+    });
+
+
     let vol = new Tone.Volume(-28);
     // polySynth.chain(delay, reverb);
-    polySynth.chain(vol, reverb).chain(vol, delay).chain(vol, Tone.Master);
+    polySynth.chain(vol, delay).chain(vol, reverb).chain(vol, Tone.Master);
 
 
     // let constraints = {
@@ -52,15 +68,17 @@ function setup() {
     //     }
     // };
     // capture = createCapture(constraints);
-    
+
     capture = createCapture(VIDEO);
     capture.size(320, 240);
     // capture.hide();
+
     cameraScreenRatio = 600 / 240;
 
     buff = createImage(80, 240);
 
-    startPostion = 80 * cameraScreenRatio;
+    startPostion = 1;
+    //   startPostion = 80 * cameraScreenRatio;
 
     for (let i = 0; i < lineNum; i++) {
         linesXPos.push(startPostion);
@@ -76,7 +94,7 @@ function setup() {
 
 
 function draw() {
-    
+
     background(0);
 
     trigger();
@@ -96,6 +114,7 @@ function draw() {
     push();
     translate(0, 0);
     image(buffImageUpdate(capture), 0, 0, startPostion, 240 * cameraScreenRatio);
+    filter(INVERT);
     pop();
 
 }
@@ -128,7 +147,7 @@ function lineColorCapture(){
     for (let i = 0; i < lineNum; i++) {
         let _index = (i + 0.5) * capture.height / lineNum * capture.width - 80;
         linesColor[i] = [capture.pixels[_index * 4 + 0], capture.pixels[_index * 4 + 1], capture.pixels[_index * 4 + 2], 255];
-    }    
+    }
 }
 
 
@@ -138,7 +157,8 @@ function pathLineDraw(){
     for (let i = 0; i < linesColor.length; i++) {
         stroke(linesColor[i]);
         strokeWeight(height / lineNum * 0.5);
-        line(80 * cameraScreenRatio, (i + 0.5) * height / lineNum, width, (i + 0.5) * height / lineNum);
+        line(1 * cameraScreenRatio, (i + 0.5) * height / lineNum, width, (i + 0.5) * height / lineNum);
+        //   line(80 * cameraScreenRatio, (i + 0.5) * height / lineNum, width, (i + 0.5) * height / lineNum);
     }
     pop();
 
@@ -150,22 +170,23 @@ function trigger(){
     for (let i = 0; i < linesColor.length; i++) {
         let _colorValueSum = (linesColor[i][0] + linesColor[i][1] + linesColor[i][2]) / 3.0;
         let _diffColorValue = abs(_colorValueSum - linesOldSum[i])
-        if (_diffColorValue > 40) {
+        if (_diffColorValue > 17) {
+          //  if (_diffColorValue > 30) {
             linesTrigger[i] = true;
             linesOldSum[i] = _colorValueSum;
 
             if (linesToneTrigger[i] === true) {
-                // polySynth.triggerAttackRelease(noteListWhole[19 - i], "8t");
+                polySynth.triggerAttackRelease(noteListWhole[29 - i], "1t");
                 linesToneTrigger[i] = false;
             }
-        } 
+        }
 
         if (linesXPos[i] > (width + startPostion) * 0.5 && linesToneTrigger[i] === false) {
             waveMoving[i] = true;
             linesTrigger[i] = true;
             linesToneTrigger[i] = true;
             if (linesToneTrigger[i] === true) {
-                polySynth.triggerAttackRelease(noteListWhole[19-i], "16t");
+                polySynth.triggerAttackRelease(noteListWhole[29 - i], "32t");
             }
         }
 
@@ -176,20 +197,22 @@ function trigger(){
         }
 
         if (linesTrigger[i] === true) {
-            linesMovSpeed[i] = 10.0;
+            //linesMovSpeed[i] = 37.0;
+             linesMovSpeed[i] = 17.7;
         } else {
             linesXPos[i] = startPostion;
-            linesMovSpeed[i] = 0.0;
+            linesMovSpeed[i] = 3.7;
+            //  linesMovSpeed[i] = 0.0;
         }
-        
+
     }
 
 }
 
 
 
-function ellipseMoving(){ 
-    
+function ellipseMoving(){
+
     push();
     noStroke();
     for (let i = 0; i < linesColor.length; i++) {
@@ -236,9 +259,9 @@ function waveLineDraw(){
     }
     curveVertex((width + startPostion) * 0.5, (lineNum + 0.0) * height / lineNum);
     curveVertex((width + startPostion) * 0.5, (lineNum + 0.0) * height / lineNum);
-    
+
     endShape();
-    
+
     pop();
 
 }
